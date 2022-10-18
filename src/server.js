@@ -1,10 +1,6 @@
-// Link to frontend: https://github.com/milesbb/BE-WK2-D2-FE-Cloud.git
-
 import express from "express";
-
 import listEndpoints from "express-list-endpoints";
 import cors from "cors";
-
 import {
   badRequestHandler,
   genericServerErrorHandler,
