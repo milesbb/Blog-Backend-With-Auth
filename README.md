@@ -1,3 +1,3 @@
-# Node.js + Express.js + MongoDB CRUD API for Blog App
+# Node.js + Express.js + MongoDB/Mongoose CRUD API for Blog App
 
-Backend for react blog app with email, .pdf, and .csv support within blog posts. Altered for cloud deployment.
+Backend for react blog app, connected to mongoDB database for CRUD actions with blog posts.
