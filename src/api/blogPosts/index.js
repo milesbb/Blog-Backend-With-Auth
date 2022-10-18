@@ -49,6 +49,24 @@ blogPostsRouter.get("/:blogPostId", async (req, res, next) => {
   }
 });
 
+// GET SPECIFIC BY CATEGORY
+
+blogPostsRouter.get("/search/:category", async (req, res, next) => {
+  try {
+    console.log(req.params.category);
+    const blogPosts = await BlogPostModel.find({category: `${req.params.category}`});
+    if (blogPosts) {
+      res.send(blogPosts);
+    } else {
+      next(
+        createHttpError(404, `User with id ${req.params.blogPostId} not found`)
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST
 
 blogPostsRouter.post("/", async (req, res, next) => {
