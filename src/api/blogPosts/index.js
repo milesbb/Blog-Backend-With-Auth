@@ -6,6 +6,7 @@ import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import createHttpError from "http-errors";
+import q2m from "query-to-mongo";
 
 const cloudinaryUploader = multer({
   storage: new CloudinaryStorage({
@@ -32,6 +33,34 @@ blogPostsRouter.get("/", async (req, res, next) => {
     next(error);
   }
 });
+
+// GET POSTS PAGINATION
+
+blogPostsRouter.get("/paginate", async (req, res, next) => {
+  try {
+    const mQuery = q2m(req.query);
+
+    const totalPosts = await BlogPostModel.countDocuments(mQuery.criteria);
+
+    const blogPosts = await BlogPostModel.find(
+      mQuery.criteria,
+      mQuery.options.fields
+    )
+      .skip(mQuery.options.skip)
+      .limit(mQuery.options.limit)
+      .sort(mQuery.options.sort);
+
+    res.send({
+      links: mQuery.links("http://localhost:3001/blogPosts", totalPosts),
+      totalPosts,
+      totalPages: Math.ceil(totalPosts / mQuery.options.limit),
+      blogPosts,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 // GET SPECIFIC
 
@@ -160,6 +189,7 @@ blogPostsRouter.post(
   }
 );
 
+
 // COMMENTS GET
 
 blogPostsRouter.get("/:blogPostId/comments", async (req, res, next) => {
@@ -263,7 +293,7 @@ blogPostsRouter.put(
           (comment) => comment._id.toString() === req.params.commentId
         );
 
-        console.log(selectedCommentIndex)
+        console.log(selectedCommentIndex);
 
         if (selectedCommentIndex !== -1) {
           blogPost.comments[selectedCommentIndex] = {
