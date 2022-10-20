@@ -27,7 +27,10 @@ const blogPostsRouter = express.Router();
 
 blogPostsRouter.get("/", async (req, res, next) => {
   try {
-    const blogPosts = await BlogPostModel.find();
+    const blogPosts = await BlogPostModel.find().populate({
+      path: "authors",
+      select: "name surname avatar",
+    });
     res.send(blogPosts);
   } catch (error) {
     next(error);
@@ -48,7 +51,8 @@ blogPostsRouter.get("/paginate", async (req, res, next) => {
     )
       .skip(mQuery.options.skip)
       .limit(mQuery.options.limit)
-      .sort(mQuery.options.sort);
+      .sort(mQuery.options.sort)
+      .populate({ path: "authors", select: "name surname avatar" });
 
     res.send({
       links: mQuery.links("http://localhost:3001/blogPosts", totalPosts),
@@ -61,12 +65,34 @@ blogPostsRouter.get("/paginate", async (req, res, next) => {
   }
 });
 
+// GET POSTS WITH AUTHOR
+
+blogPostsRouter.get("/", async (req, res, next) => {
+  try {
+    const mongoQuery = q2m(req.query);
+
+    const { blogPosts, total } = await BlogPostModel.findBlogPostsWithAuthors(
+      mongoQuery
+    );
+
+    res.send({
+      links: mongoQuery.links("http://localhost:3001/blogPosts", total),
+      total,
+      totalPages: Math.ceil(total / mongoQuery.options.limit),
+      blogPosts,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET SPECIFIC
 
 blogPostsRouter.get("/:blogPostId", async (req, res, next) => {
   try {
-    const blogPost = await BlogPostModel.findById(req.params.blogPostId);
+    const blogPost = await BlogPostModel.findById(
+      req.params.blogPostId
+    ).populate({ path: "authors", select: "name surname avatar" });
     if (blogPost) {
       res.send(blogPost);
     } else {
@@ -86,7 +112,7 @@ blogPostsRouter.get("/search/:category", async (req, res, next) => {
     console.log(req.params.category);
     const blogPosts = await BlogPostModel.find({
       category: `${req.params.category}`,
-    });
+    }).populate({ path: "authors", select: "name surname avatar" });
     if (blogPosts) {
       res.send(blogPosts);
     } else {
@@ -188,7 +214,6 @@ blogPostsRouter.post(
     }
   }
 );
-
 
 // COMMENTS GET
 

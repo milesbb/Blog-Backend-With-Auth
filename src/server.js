@@ -10,6 +10,7 @@ import {
 import blogPostsRouter from "./api/blogPosts/index.js";
 import infoRouter from "./api/info/index.js";
 import mongoose from "mongoose";
+import authorsRouter from "./api/authors/index.js";
 
 const server = express();
 const port = process.env.PORT || 3001;
@@ -24,6 +25,7 @@ server.use(
 server.use(express.json());
 
 server.use("/blogPosts", blogPostsRouter);
+server.use("/authors", authorsRouter);
 server.use("/info", infoRouter);
 
 server.use(badRequestHandler);
