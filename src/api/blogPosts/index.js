@@ -7,6 +7,7 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import createHttpError from "http-errors";
 import q2m from "query-to-mongo";
+import { basicAuthMiddleware } from "../../lib/auth/basicAuth.js";
 
 const cloudinaryUploader = multer({
   storage: new CloudinaryStorage({
@@ -127,7 +128,7 @@ blogPostsRouter.get("/search/:category", async (req, res, next) => {
 
 // POST
 
-blogPostsRouter.post("/", async (req, res, next) => {
+blogPostsRouter.post("/", basicAuthMiddleware, async (req, res, next) => {
   try {
     const newBlogPost = new BlogPostModel(req.body);
     const { _id } = await newBlogPost.save();
@@ -140,7 +141,7 @@ blogPostsRouter.post("/", async (req, res, next) => {
 
 // PUT
 
-blogPostsRouter.put("/:blogPostId", async (req, res, next) => {
+blogPostsRouter.put("/:blogPostId", basicAuthMiddleware, async (req, res, next) => {
   try {
     const updatedBlogPost = await BlogPostModel.findByIdAndUpdate(
       req.params.blogPostId,
@@ -162,7 +163,7 @@ blogPostsRouter.put("/:blogPostId", async (req, res, next) => {
 
 // DELETE
 
-blogPostsRouter.delete("/:blogPostId", async (req, res, next) => {
+blogPostsRouter.delete("/:blogPostId", basicAuthMiddleware, async (req, res, next) => {
   try {
     const deletedBlogPost = await BlogPostModel.findByIdAndDelete(
       req.params.blogPostId
@@ -182,7 +183,7 @@ blogPostsRouter.delete("/:blogPostId", async (req, res, next) => {
 // POST CLOUDINARY COVER IMAGE
 
 blogPostsRouter.post(
-  "/:blogPostId/cloudinary",
+  "/:blogPostId/cloudinary", basicAuthMiddleware,
   cloudinaryUploader,
   async (req, res, next) => {
     try {
@@ -275,7 +276,7 @@ blogPostsRouter.get(
 
 // COMMENTS POST
 
-blogPostsRouter.post("/:blogPostId/comments", async (req, res, next) => {
+blogPostsRouter.post("/:blogPostId/comments", basicAuthMiddleware, async (req, res, next) => {
   try {
     const newCommentData = new CommentModel(req.body);
 
@@ -308,7 +309,7 @@ blogPostsRouter.post("/:blogPostId/comments", async (req, res, next) => {
 // COMMENTS PUT
 
 blogPostsRouter.put(
-  "/:blogPostId/comments/:commentId",
+  "/:blogPostId/comments/:commentId", basicAuthMiddleware,
   async (req, res, next) => {
     try {
       const blogPost = await BlogPostModel.findById(req.params.blogPostId);
@@ -354,7 +355,7 @@ blogPostsRouter.put(
 // COMMENTS DELETE
 
 blogPostsRouter.delete(
-  "/:blogPostId/comments/:commentId",
+  "/:blogPostId/comments/:commentId", basicAuthMiddleware,
   async (req, res, next) => {
     try {
       const updatedBlogPost = await BlogPostModel.findByIdAndUpdate(

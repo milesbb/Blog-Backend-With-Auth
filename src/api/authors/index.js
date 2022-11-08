@@ -1,4 +1,5 @@
 import AuthorModel from "./model.js";
+
 import express from "express";
 import createHttpError from "http-errors";
 
@@ -31,6 +32,16 @@ authorsRouter.get("/:authorId", async (req, res, next) => {
     next(error);
   }
 });
+
+// GET ME STORIES
+
+authorsRouter.get("/me/stories", async (req, res, next) => {
+  try {
+    
+  } catch (error) {
+    next(error)
+  }
+})
 
 // POST
 
