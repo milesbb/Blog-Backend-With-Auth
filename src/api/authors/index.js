@@ -1,9 +1,35 @@
 import AuthorModel from "./model.js";
-
+import BlogPostModel from "../blogPosts/model.js";
 import express from "express";
 import createHttpError from "http-errors";
+import { basicAuthMiddleware } from "../../lib/auth/basicAuth.js";
 
 const authorsRouter = express.Router();
+
+// GET ME
+
+authorsRouter.get("/me", basicAuthMiddleware, async (req, res, next) => {
+  try {
+    res.send(req.author);
+  } catch (error) {
+    next(error);
+  }
+});
+// GET ME STORIES
+
+authorsRouter.get(
+  "/me/stories",
+  basicAuthMiddleware,
+  async (req, res, next) => {
+    try {
+      const blogPosts = await BlogPostModel.find({ authors: req.author._id });
+
+      res.send(blogPosts);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 // GET
 
@@ -33,24 +59,15 @@ authorsRouter.get("/:authorId", async (req, res, next) => {
   }
 });
 
-// GET ME STORIES
-
-authorsRouter.get("/me/stories", async (req, res, next) => {
-  try {
-    
-  } catch (error) {
-    next(error)
-  }
-})
 
 // POST
 
 authorsRouter.post("/", async (req, res, next) => {
   try {
     const newAuthorPre = {
-        ...req.body,
-        avatar: `https://ui-avatars.com/api/?name=${req.body.name}+${req.body.surname}`
-    }
+      ...req.body,
+      avatar: `https://ui-avatars.com/api/?name=${req.body.name}+${req.body.surname}`,
+    };
     const newAuthor = new AuthorModel(newAuthorPre);
     const { _id } = await newAuthor.save();
 
@@ -100,6 +117,5 @@ authorsRouter.delete("/:authorId", async (req, res, next) => {
     next(error);
   }
 });
-
 
 export default authorsRouter;

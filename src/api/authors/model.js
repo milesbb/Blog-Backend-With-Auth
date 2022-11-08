@@ -46,21 +46,24 @@ authorSchema.static("checkCredentials", async function (email, password, req) {
 
   let authorIndex = null;
 
-  // Checks whether 'logged in user' is one of the authors of the post
-  if (req.method !== "POST") {
-    // For cases where blogPostId is in path params
-    const relevantBlogPost = await BlogPostModel.findById(
-      req.params.blogPostId
-    );
+  // Making sure author is attached to post being handled
+  if (req.baseUrl === "/blogPosts") {
+    // Checks whether 'logged in user' is one of the authors of the post
+    if (req.method !== "POST") {
+      // For cases where blogPostId is in path params
+      const relevantBlogPost = await BlogPostModel.findById(
+        req.params.blogPostId
+      );
 
-    authorIndex = relevantBlogPost.authors.findIndex(
-      (authorBlog) => authorBlog.toString() === author._id.toString()
-    );
-  } else {
-    // When blogPostId not created yet
-    authorIndex = req.body.authors.findIndex(
-      (authorBlog) => authorBlog === author._id.toString()
-    );
+      authorIndex = relevantBlogPost.authors.findIndex(
+        (authorBlog) => authorBlog.toString() === author._id.toString()
+      );
+    } else {
+      // When blogPostId not created yet
+      authorIndex = req.body.authors.findIndex(
+        (authorBlog) => authorBlog === author._id.toString()
+      );
+    }
   }
 
   if (authorIndex !== -1) {
