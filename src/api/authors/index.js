@@ -3,7 +3,7 @@ import BlogPostModel from "../blogPosts/model.js";
 import express from "express";
 import createHttpError from "http-errors";
 import { basicAuthMiddleware } from "../../lib/auth/basicAuth.js";
-import { createAccessToken } from "../../lib/auth/tools.js";
+import { createTokens, verifyRefreshAndCreateNewTokens } from "../../lib/auth/tools.js";
 import { JWTAuthMiddleware } from "../../lib/auth/jwtAuth.js";
 
 const authorsRouter = express.Router();
@@ -12,7 +12,7 @@ const authorsRouter = express.Router();
 
 authorsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const author = await AuthorModel.findById(req.author._id)
+    const author = await AuthorModel.findById(req.author._id);
     res.send(author);
   } catch (error) {
     next(error);
@@ -21,19 +21,15 @@ authorsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
 
 // GET ME STORIES
 
-authorsRouter.get(
-  "/me/stories",
-  JWTAuthMiddleware,
-  async (req, res, next) => {
-    try {
-      const blogPosts = await BlogPostModel.find({ authors: req.author._id });
+authorsRouter.get("/me/stories", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const blogPosts = await BlogPostModel.find({ authors: req.author._id });
 
-      res.send(blogPosts);
-    } catch (error) {
-      next(error);
-    }
+    res.send(blogPosts);
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 // REGISTER
 
@@ -50,7 +46,7 @@ authorsRouter.post("/register", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-})
+});
 
 // LOGIN
 
@@ -61,11 +57,8 @@ authorsRouter.post("/login", async (req, res, next) => {
     const author = await AuthorModel.checkCredentials(email, password, req);
 
     if (author) {
-      const accessToken = await createAccessToken({
-        _id: author._id,
-        role: author.role,
-      });
-      res.send({ accessToken });
+      const {accessToken, refreshToken} = await createTokens(author);
+      res.send({ accessToken, refreshToken });
     } else {
       next(createHttpError(401, `Credentials are not ok!`));
     }
@@ -73,6 +66,20 @@ authorsRouter.post("/login", async (req, res, next) => {
     next(error);
   }
 });
+
+// REFRESH TOKEN
+
+authorsRouter.post("/refreshTokens", async (req, res, next) => {
+  try {
+    const { currentRefreshToken } = req.body
+
+    const {accessToken, refreshToken} = await verifyRefreshAndCreateNewTokens(currentRefreshToken)
+
+    res.send({accessToken, refreshToken})
+  } catch (error) {
+    next(error)
+  }
+})
 
 // GET
 
@@ -143,21 +150,25 @@ authorsRouter.put("/:authorId", JWTAuthMiddleware, async (req, res, next) => {
 
 // DELETE
 
-authorsRouter.delete("/:authorId", JWTAuthMiddleware, async (req, res, next) => {
-  try {
-    const deletedAuthor = await AuthorModel.findByIdAndDelete(
-      req.params.authorId
-    );
-    if (deletedAuthor) {
-      res.status(204).send();
-    } else {
-      next(
-        createHttpError(404, `User with id ${req.params.authorId} not found`)
+authorsRouter.delete(
+  "/:authorId",
+  JWTAuthMiddleware,
+  async (req, res, next) => {
+    try {
+      const deletedAuthor = await AuthorModel.findByIdAndDelete(
+        req.params.authorId
       );
+      if (deletedAuthor) {
+        res.status(204).send();
+      } else {
+        next(
+          createHttpError(404, `User with id ${req.params.authorId} not found`)
+        );
+      }
+    } catch (error) {
+      next(error);
     }
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 export default authorsRouter;

@@ -12,6 +12,7 @@ const authorSchema = new Schema(
     email: { type: String, required: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["Admin", "User"], default: "User" },
+    refreshToken: { type: String }
   },
   {
     timestamps: true,
@@ -37,6 +38,7 @@ authorSchema.methods.toJSON = function () {
   delete author.createdAt;
   delete author.updatedAt;
   delete author.__v;
+  delete author.refreshToken;
 
   return author;
 };
