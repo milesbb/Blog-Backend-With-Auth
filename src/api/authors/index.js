@@ -3,23 +3,27 @@ import BlogPostModel from "../blogPosts/model.js";
 import express from "express";
 import createHttpError from "http-errors";
 import { basicAuthMiddleware } from "../../lib/auth/basicAuth.js";
+import { createAccessToken } from "../../lib/auth/tools.js";
+import { JWTAuthMiddleware } from "../../lib/auth/jwtAuth.js";
 
 const authorsRouter = express.Router();
 
 // GET ME
 
-authorsRouter.get("/me", basicAuthMiddleware, async (req, res, next) => {
+authorsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    res.send(req.author);
+    const author = await AuthorModel.findById(req.author._id)
+    res.send(author);
   } catch (error) {
     next(error);
   }
 });
+
 // GET ME STORIES
 
 authorsRouter.get(
   "/me/stories",
-  basicAuthMiddleware,
+  JWTAuthMiddleware,
   async (req, res, next) => {
     try {
       const blogPosts = await BlogPostModel.find({ authors: req.author._id });
@@ -30,6 +34,45 @@ authorsRouter.get(
     }
   }
 );
+
+// REGISTER
+
+authorsRouter.post("/register", async (req, res, next) => {
+  try {
+    const newAuthorPre = {
+      ...req.body,
+      avatar: `https://ui-avatars.com/api/?name=${req.body.name}+${req.body.surname}`,
+    };
+    const newAuthor = new AuthorModel(newAuthorPre);
+    const { _id } = await newAuthor.save();
+
+    res.status(201).send({ _id });
+  } catch (error) {
+    next(error);
+  }
+})
+
+// LOGIN
+
+authorsRouter.post("/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    const author = await AuthorModel.checkCredentials(email, password, req);
+
+    if (author) {
+      const accessToken = await createAccessToken({
+        _id: author._id,
+        role: author.role,
+      });
+      res.send({ accessToken });
+    } else {
+      next(createHttpError(401, `Credentials are not ok!`));
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET
 
@@ -59,10 +102,9 @@ authorsRouter.get("/:authorId", async (req, res, next) => {
   }
 });
 
-
 // POST
 
-authorsRouter.post("/", async (req, res, next) => {
+authorsRouter.post("/", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const newAuthorPre = {
       ...req.body,
@@ -79,7 +121,7 @@ authorsRouter.post("/", async (req, res, next) => {
 
 // PUT
 
-authorsRouter.put("/:authorId", async (req, res, next) => {
+authorsRouter.put("/:authorId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const updatedAuthor = await AuthorModel.findByIdAndUpdate(
       req.params.authorId,
@@ -101,7 +143,7 @@ authorsRouter.put("/:authorId", async (req, res, next) => {
 
 // DELETE
 
-authorsRouter.delete("/:authorId", async (req, res, next) => {
+authorsRouter.delete("/:authorId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const deletedAuthor = await AuthorModel.findByIdAndDelete(
       req.params.authorId
