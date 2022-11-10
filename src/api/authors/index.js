@@ -3,10 +3,40 @@ import BlogPostModel from "../blogPosts/model.js";
 import express from "express";
 import createHttpError from "http-errors";
 import { basicAuthMiddleware } from "../../lib/auth/basicAuth.js";
-import { createTokens, verifyRefreshAndCreateNewTokens } from "../../lib/auth/tools.js";
+import {
+  createTokens,
+  verifyRefreshAndCreateNewTokens,
+} from "../../lib/auth/tools.js";
 import { JWTAuthMiddleware } from "../../lib/auth/jwtAuth.js";
+import passport from "passport";
 
 const authorsRouter = express.Router();
+
+// AUTH GOOGLE
+
+authorsRouter.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// AUTH GOOGLE CALLBACK
+
+authorsRouter.get(
+  "/auth/googleRedirect",
+  passport.authenticate(
+    "google",
+    { session: false },
+    async (req, res, next) => {
+      const { accessToken } = req.author;
+      res.redirect(`${process.env.FE_URL}/home?accessToken=${accessToken}`);
+
+      try {
+      } catch (error) {
+        next(error);
+      }
+    }
+  )
+);
 
 // GET ME
 
@@ -57,7 +87,7 @@ authorsRouter.post("/login", async (req, res, next) => {
     const author = await AuthorModel.checkCredentials(email, password, req);
 
     if (author) {
-      const {accessToken, refreshToken} = await createTokens(author);
+      const { accessToken, refreshToken } = await createTokens(author);
       res.send({ accessToken, refreshToken });
     } else {
       next(createHttpError(401, `Credentials are not ok!`));
@@ -71,15 +101,17 @@ authorsRouter.post("/login", async (req, res, next) => {
 
 authorsRouter.post("/refreshTokens", async (req, res, next) => {
   try {
-    const { currentRefreshToken } = req.body
+    const { currentRefreshToken } = req.body;
 
-    const {accessToken, refreshToken} = await verifyRefreshAndCreateNewTokens(currentRefreshToken)
+    const { accessToken, refreshToken } = await verifyRefreshAndCreateNewTokens(
+      currentRefreshToken
+    );
 
-    res.send({accessToken, refreshToken})
+    res.send({ accessToken, refreshToken });
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 // GET
 

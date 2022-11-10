@@ -12,7 +12,8 @@ const authorSchema = new Schema(
     email: { type: String, required: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["Admin", "User"], default: "User" },
-    refreshToken: { type: String }
+    refreshToken: { type: String },
+    googleId: {type: String}
   },
   {
     timestamps: true,

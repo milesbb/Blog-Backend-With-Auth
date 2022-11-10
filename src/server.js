@@ -11,9 +11,13 @@ import blogPostsRouter from "./api/blogPosts/index.js";
 import infoRouter from "./api/info/index.js";
 import mongoose from "mongoose";
 import authorsRouter from "./api/authors/index.js";
+import passport from "passport";
+import googleStrategy from "./lib/auth/google.js";
 
 const server = express();
 const port = process.env.PORT || 3001;
+
+passport.use("google", googleStrategy)
 
 server.use(
   cors({
@@ -23,6 +27,7 @@ server.use(
 );
 
 server.use(express.json());
+server.use(passport.initialize())
 
 server.use("/blogPosts", blogPostsRouter);
 server.use("/authors", authorsRouter);
