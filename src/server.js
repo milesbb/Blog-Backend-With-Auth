@@ -25,7 +25,7 @@ server.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
-
+  
 server.use(express.json());
 server.use(passport.initialize())
 

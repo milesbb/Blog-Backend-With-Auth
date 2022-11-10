@@ -23,19 +23,15 @@ authorsRouter.get(
 
 authorsRouter.get(
   "/auth/googleRedirect",
-  passport.authenticate(
-    "google",
-    { session: false },
-    async (req, res, next) => {
-      const { accessToken } = req.author;
-      res.redirect(`${process.env.FE_URL}/home?accessToken=${accessToken}`);
-
-      try {
-      } catch (error) {
-        next(error);
-      }
+  passport.authenticate("google", { session: false }),
+  async (req, res, next) => {
+    const { accessToken } = req.user.tokens;
+    res.redirect(`${process.env.FE_URL}/home?token=${accessToken}`);
+    try {
+    } catch (error) {
+      next(error);
     }
-  )
+  }
 );
 
 // GET ME

@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import AuthorsModel from "../../api/authors/model.js"
+import AuthorsModel from "../../api/authors/model.js";
 
 const createAccessToken = (payload) =>
   new Promise((resolve, reject) =>
@@ -49,12 +49,14 @@ export const verifyRefreshToken = (accessToken) =>
   );
 
 export const createTokens = async (author) => {
+  console.log("creating tokens");
   const accessToken = await createAccessToken({
     _id: author._id,
     role: author.role,
   });
+  console.log("accessToken", accessToken);
   const refreshToken = await createRefreshToken({ _id: author._id });
-
+  console.log("refreshToken", refreshToken);
   author.refreshToken = refreshToken;
 
   await author.save();

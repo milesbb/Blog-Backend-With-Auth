@@ -1,40 +1,42 @@
-import GoogleStrategy from "passport-google-oauth20"
-import AuthorsModel from "../../api/authors/model.js"
-import { createTokens } from "./tools.js"
+import GoogleStrategy from "passport-google-oauth20";
+import AuthorsModel from "../../api/authors/model.js";
+import { createTokens } from "./tools.js";
 
 const googleStrategy = new GoogleStrategy(
   {
     clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_SECRET,
-    callbackURL: `${process.env.BE_URL}/users/googleRedirect`,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${process.env.BE_URL}/authors/auth/googleRedirect`,
   },
   async (_, __, profile, passportNext) => {
-    console.log("PROFILE: ", profile)
+    console.log("Profile: ", profile);
+
     try {
-      const { email, given_name, family_name } = profile._json
-      const author = await AuthorsModel.findOne({ email })
+      const { email, given_name, family_name } = profile._json;
+      const author = await AuthorsModel.findOne({ email });
 
       if (author) {
-        const { accessToken } = await createTokens(author)
-        passportNext(null, { accessToken })
+        const tokens = await createTokens(author);
+        passportNext(null, { tokens });
       } else {
         const newAuthor = new AuthorsModel({
-          firstName: given_name,
-          lastName: family_name,
+          name: given_name,
+          surname: family_name,
+          avatar: "123",
+          password: "12345",
           email,
           googleId: profile.id,
-        })
-        const createdAuthor = await newAuthor.save()
+        });
+        const createdAuthor = await newAuthor.save();
 
-        // 3.1 Then we can go next (to /googleRedirect route handler function), passing the token
-        const { accessToken } = await createTokens(createdAuthor)
-        passportNext(null, { accessToken })
+        const tokens = await createTokens(createdAuthor);
+        console.log(tokens);
+        passportNext(null, { tokens });
       }
     } catch (error) {
-      // 4. In case of errors we are going to catch'em
-      passportNext(error)
+      passportNext(error);
     }
   }
-)
+);
 
-export default googleStrategy
+export default googleStrategy;
